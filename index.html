@@ -41,7 +41,11 @@ pre{background:var(--navy);color:#dfe6f4;padding:16px;border-radius:11px;overflo
   <input id=domain type=text placeholder="acme">
   <label>Pipedrive API token <span class=hint>(Settings &rarr; Personal preferences &rarr; API)</span></label>
   <input id=token type=password placeholder="your Pipedrive API token">
-  <p class=hint style="margin-top:14px">Runs entirely in your browser &mdash; no install. The token is used only to read your stage list (directly from Pipedrive) and is never saved anywhere.</p>
+  <label>Kixie Business ID <span class=hint>(Kixie: Settings &rarr; Developer / API)</span></label>
+  <input id=kbiz type=text placeholder="your Kixie business id">
+  <label>Kixie API Key</label>
+  <input id=kkey type=password placeholder="your Kixie API key">
+  <p class=hint style="margin-top:14px">Runs entirely in your browser &mdash; no install. Your Pipedrive token only reads your stage list (straight from Pipedrive); your Kixie details are just carried into the Railway variables at the end. Nothing is stored or sent anywhere else.</p>
   <button id=connect onclick=connect()>Connect &amp; load my stages &rarr;</button>
   <span id=e1 style="color:#dc2626;margin-left:10px"></span>
 </div>
@@ -170,11 +174,12 @@ function generate(){
   document.getElementById('cfg').textContent=LAST_CFG;
   document.getElementById('cfgpath').textContent='Downloaded as config.py -- check your Downloads folder.';
   const sec={API_TOKEN:genSecret(43),WEBHOOK_USER:'pd-'+genSecret(8).toLowerCase(),WEBHOOK_PASS:genSecret(40)};
+  const gv=id=>{const e=document.getElementById(id);return e&&e.value.trim()?e.value.trim():'';};
   document.getElementById('env').textContent=
-    'PIPEDRIVE_API_TOKEN = (your Pipedrive API token)\n'+
-    'PIPEDRIVE_DOMAIN    = '+(document.getElementById('domain').value||'api')+'\n'+
-    'KIXIE_BUSINESS_ID   = (your Kixie business id)\n'+
-    'KIXIE_API_KEY       = (your Kixie API key)\n'+
+    'PIPEDRIVE_API_TOKEN = '+(gv('token')||'(your Pipedrive API token)')+'\n'+
+    'PIPEDRIVE_DOMAIN    = '+(gv('domain')||'api')+'\n'+
+    'KIXIE_BUSINESS_ID   = '+(gv('kbiz')||'(your Kixie business id)')+'\n'+
+    'KIXIE_API_KEY       = '+(gv('kkey')||'(your Kixie API key)')+'\n'+
     'API_TOKEN           = '+sec.API_TOKEN+'\n'+
     'WEBHOOK_USER        = '+sec.WEBHOOK_USER+'\n'+
     'WEBHOOK_PASS        = '+sec.WEBHOOK_PASS;
