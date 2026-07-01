@@ -48,6 +48,9 @@ pre{background:var(--navy);color:#dfe6f4;padding:16px;border-radius:11px;overflo
 
 <div class="card step" id=s2>
   <h3 style="margin:0 0 10px">Map your stages</h3>
+  <label>Whose deals should this dial?</label>
+  <select id=owner style="width:100%;max-width:340px;padding:9px 11px;border:1px solid #cbd5e1;border-radius:9px;font-size:14px;background:#fff"><option value="">&mdash; choose the salesperson &mdash;</option></select>
+  <p class=hint style="margin:6px 0 16px">Only this person's deals get dialed. Each salesperson runs their own copy &mdash; set up JJ here, and do Daniel separately later.</p>
   <p class=hint>Enter the Kixie PowerList ID for each stage you want dialed. Tick <b>Skip</b> for the rest. Find a PowerList's ID in its Kixie URL.</p>
   <table id=stbl><thead><tr><th>Pipeline</th><th>Stage</th><th>Kixie PowerList ID</th><th>Skip</th></tr></thead><tbody></tbody></table>
   <div style="margin-top:16px">
@@ -88,6 +91,13 @@ async function pdGet(domain,token,path,params){
   if(!r.ok) throw new Error('Pipedrive returned HTTP '+r.status+'.');
   return r.json();
 }
+async function pdGetV1(domain,token,path,params){
+  const q=new URLSearchParams(params||{}); q.set('api_token',token);
+  const url='https://'+domain+'.pipedrive.com/api/v1'+path+'?'+q.toString();
+  const r=await fetch(url,{headers:{'x-api-token':token}});
+  if(!r.ok) throw new Error('Pipedrive returned HTTP '+r.status+' fetching users.');
+  return r.json();
+}
 async function connect(){
   const btn=document.getElementById('connect'), err=document.getElementById('e1');
   err.textContent=''; btn.disabled=true; btn.textContent='Connecting...';
@@ -106,6 +116,13 @@ async function connect(){
       tr.innerHTML='<td><span class=pill>'+esc(s.pipeline_name)+'</span></td><td>'+esc(s.name)+'</td>'+
         '<td><input class=plinput id=pl'+i+' placeholder="PowerList ID"></td>'+
         '<td><input type=checkbox id=sk'+i+' onchange="toggle('+i+')"></td>'; tb.appendChild(tr); });
+    const usr=await pdGetV1(domain,token,'/users');
+    const sel=document.getElementById('owner');
+    sel.length=1;
+    (usr.data||[]).filter(u=>u.active_flag!==false)
+      .sort((a,b)=>String(a.name).localeCompare(String(b.name)))
+      .forEach(u=>{ const o=document.createElement('option'); o.value=u.id;
+        o.textContent=u.name+(u.email?(' ('+u.email+')'):''); sel.appendChild(o); });
     show('s2');
   }catch(e){
     err.textContent=(e.message||'Could not connect.')+' If this keeps failing, open this file in Google Chrome.';
@@ -114,7 +131,7 @@ async function connect(){
 function toggle(i){const r=document.getElementById('r'+i),sk=document.getElementById('sk'+i).checked;
   r.classList.toggle('skip',sk); document.getElementById('pl'+i).disabled=sk;}
 
-function buildConfig(mapping){
+function buildConfig(mapping, ownerId, ownerName){
   const clean=[];
   mapping.forEach(m=>{ const sid=parseInt(m.stage_id,10); if(isNaN(sid))return;
     const pl=String(m.powerlist_id||'').trim();
@@ -128,6 +145,7 @@ function buildConfig(mapping){
     'Secrets (API tokens) are NOT stored here; they go in Railway env vars.\n'+Q+'\n\nSTAGE_TO_POWERLIST = {\n';
   clean.forEach(c=>{ out+='    '+String(c[0]).padStart(w)+': '+c[1]+',   # '+c[2]+'\n'; });
   out+='}\n\nSCOPED_MODE = True\nSTAGE_PRIORITY = []\n';
+  if(ownerId){ out+='PIPEDRIVE_OWNER_ID = '+parseInt(ownerId,10)+'   # only this person\'s deals get dialed: '+String(ownerName||'').replace(/[\r\n]/g,' ')+'\n'; }
   return out;
 }
 function genSecret(n){ let s='';
@@ -141,9 +159,13 @@ function download(name,text){ const b=new Blob([text],{type:'text/plain'});
 
 let LAST_CFG='';
 function generate(){
+  const sel=document.getElementById('owner');
+  const ownerId=sel.value;
+  const ownerName=(sel.selectedIndex>0 && sel.options[sel.selectedIndex])?sel.options[sel.selectedIndex].textContent:'';
+  if(!ownerId){ alert('First choose whose deals this should dial (the salesperson dropdown at the top).'); return; }
   const mapping=STAGES.map((s,i)=>({stage_id:s.id,stage_name:s.name,
     powerlist_id:document.getElementById('pl'+i).value, skip:document.getElementById('sk'+i).checked}));
-  LAST_CFG=buildConfig(mapping);
+  LAST_CFG=buildConfig(mapping, ownerId, ownerName);
   download('config.py',LAST_CFG);
   document.getElementById('cfg').textContent=LAST_CFG;
   document.getElementById('cfgpath').textContent='Downloaded as config.py -- check your Downloads folder.';
