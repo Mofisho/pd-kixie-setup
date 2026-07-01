@@ -55,7 +55,9 @@ pre{background:var(--navy);color:#dfe6f4;padding:16px;border-radius:11px;overflo
   <label>Whose deals should this dial?</label>
   <select id=owner style="width:100%;max-width:340px;padding:9px 11px;border:1px solid #cbd5e1;border-radius:9px;font-size:14px;background:#fff"><option value="">&mdash; choose the salesperson &mdash;</option></select>
   <p class=hint style="margin:6px 0 16px">Only this person's deals get dialed. Each salesperson runs their own copy &mdash; set up JJ here, and do Daniel separately later.</p>
-  <p class=hint>Enter the Kixie PowerList ID for each stage you want dialed. Tick <b>Skip</b> for the rest. Find a PowerList's ID in its Kixie URL.</p>
+  <p class=hint>Enter the Kixie PowerList ID for each stage you dial; tick <b>Skip</b> for the rest.
+  <a href="https://app.kixie.com/manage/powerlists" target="_blank" rel="noopener" style="color:var(--b);font-weight:600">Open your PowerLists in Kixie &#8599;</a> &mdash; click a list and the number in its web address (&hellip;/powerlists/<b>362640</b>/&hellip;) is its ID.
+  <span class=hint>(Kixie has no way to list these automatically, so you copy each one once.)</span></p>
   <table id=stbl><thead><tr><th>Pipeline</th><th>Stage</th><th>Kixie PowerList ID</th><th>Skip</th></tr></thead><tbody></tbody></table>
   <div style="margin-top:16px">
     <button onclick=generate()>Generate my config &rarr;</button>
